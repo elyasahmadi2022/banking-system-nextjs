@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 
+import z from "zod";
+
 declare type SearchParamProps = {
   params: { [key: string]: string };
   searchParams: { [key: string]: string | string[] | undefined };
@@ -8,14 +10,14 @@ declare type SearchParamProps = {
 // ========================================
 
 declare type SignUpParams = {
-  firstName: string;
-  lastName: string;
-  address1: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  dateOfBirth: string;
-  ssn: string;
+  firstName?: string;
+  lastName?: string;
+  address1?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  dateOfBirth?: string;
+  ssn?: string;
   email: string;
   password: string;
 };
@@ -33,6 +35,7 @@ declare type User = {
   dwollaCustomerId: string;
   firstName: string;
   lastName: string;
+  name: string;
   address1: string;
   city: string;
   state: string;
@@ -210,6 +213,7 @@ declare interface TotalBalanceBoxProps {
 
 declare interface FooterProps {
   user: User;
+  type ?: "mobile" | "desktop"
 }
 
 declare interface RightSidebarProps {
@@ -326,3 +330,19 @@ declare interface getBankProps {
 declare interface getBankByAccountIdProps {
   accountId: string;
 }
+
+export const  authFormSchema =(type: string ) => z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  firstName: type === "sign-up"? z.string().optional() :  z.string().min(3),
+  lastName: type === "sign-up"? z.string().optional() :  z.string().min(3),
+  address1: type === "sign-up"? z.string().optional() :  z.string().min(5).max(50),
+  dateOfBirth: type === "sign-up"? z.string().optional() :  z.string().min(3),
+  state: type === "sign-up"? z.string().optional() :  z.string().min(2).max(2),
+  postalCode: type === "sign-up"? z.string().optional() :  z.string().min(3).max(6),
+  ssn: type === "sign-up"? z.string().optional() :  z.string().min(3),
+})
+
+export const formAuth = z.object({
+  men: z.string()
+})

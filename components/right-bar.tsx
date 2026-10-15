@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import BankCard from './bank-card'
+import { RightSidebarProps } from '@/types'
 
 const RightSidebar = ({banks, transactions, user}: RightSidebarProps) => {
   return (
@@ -10,13 +11,13 @@ const RightSidebar = ({banks, transactions, user}: RightSidebarProps) => {
         <div className="profile-banner"/>
         <div className="profile">
             <div className="profile-img">
-                <span className="uppercase text-blue-500 text-5xl font-bold">{user.firstName[0]}</span>
+                <span className="uppercase text-blue-500 text-5xl font-bold">{user?.name[0]}</span>
             </div>
             <div className="profile-details">
                 <h1 className="profile-name">
-                    {user.firstName} {user.lastName}
+                    {user?.name} {user?.lastName}
                 </h1>
-                <p className="profile-email">{user.email}</p>
+                <p className="profile-email">{user?.email}</p>
             </div>
         </div>
       </section>
@@ -31,12 +32,12 @@ const RightSidebar = ({banks, transactions, user}: RightSidebarProps) => {
         {banks.length > 0 && (
             <div className="relative flex flex-1 flex-col items-center justify-center gap-4 ">
                 <div className="relative z-10">
-                    <BankCard key={banks[0].$id} account={banks[0]} userName={`${user.firstName} ${user.lastName}`} showBalance={false} />
+                    <BankCard key={banks[0].$id} account={banks[0]} userName={`${user?.firstName} ${user?.lastName}`} showBalance={false} />
                 </div>
                 {
                     banks[1] && (
                         <div className=" absolute right-0 top-8 z-0 w-[90%]">
-                            <BankCard key={banks[1].$id} account={banks[1]} userName={`${user.firstName} ${user.lastName}`} showBalance={false} />
+                            <BankCard key={banks[1].$id} account={banks[1]} userName={`${user?.firstName} ${user?.lastName}`} showBalance={false} />
                         </div>
                     )
                 }

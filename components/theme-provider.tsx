@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
+import { tr } from "zod/v4/locales"
 
 function ThemeProvider({
   children,
@@ -36,7 +37,7 @@ function isTypingTarget(target: EventTarget | null) {
 
 function ThemeHotkey() {
   const { resolvedTheme, setTheme } = useTheme()
-
+  
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.repeat) {
@@ -47,7 +48,7 @@ function ThemeHotkey() {
         return
       }
 
-      if (event.key.toLowerCase() !== "d") {
+      if (event?.key?.toLowerCase() !== "d") {
         return
       }
 
