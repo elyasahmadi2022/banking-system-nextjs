@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "./ui/button"
 import CustomInput from "./custom-input"
 import { IconLoader2 } from "@tabler/icons-react"
-import  { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { signIn, signUp } from "@/lib/actions/user.actions"
 export const authFormSchema = (type: string) =>
   z.object({
@@ -52,13 +52,17 @@ const AuthForm = ({ type }: { type: string }) => {
     try {
       // signup - sign in
       if (type === "sign-in") {
-        const response = await signIn({email: data.email,password: data.password})
+        const response = await signIn({
+          email: data.email,
+          password: data.password,
+        })
+
         router.push("/")
       }
       if (type === "sign-up") {
         console.log("hello")
         const newUser = await signUp(data)
-        setUser(newUser);
+        setUser(newUser)
       }
     } catch (err) {
       console.log(err)
