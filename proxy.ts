@@ -4,7 +4,6 @@ import { getLoggedInUser } from "./lib/actions/user.actions"
 
 export default async  function proxy(request: NextRequest) {
   const isUser = await getLoggedInUser()
-  console.log("user", isUser)
   const pathname = request.nextUrl.pathname
   // 1. Define all routes that should be accessible WITHOUT logging in
   const publicAuthRoutes = ["/sign-in", "/sign-up", "/forgot-password"]

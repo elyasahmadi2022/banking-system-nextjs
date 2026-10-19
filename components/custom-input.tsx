@@ -17,8 +17,8 @@ const authFormSchema = (type: string) =>
       type === "sign-up" ? z.string().optional() : z.string().min(2).max(2),
     postalCode:
       type === "sign-up" ? z.string().optional() : z.string().min(3).max(6),
-      city:
-            type === "sign-in" ? z.string().optional() : z.string().min(3).max(6),
+    city:
+      type === "sign-in" ? z.string().optional() : z.string().min(3),
     ssn: type === "sign-up" ? z.string().optional() : z.string().min(3),
   })
 const formSchema = authFormSchema("sign-up")

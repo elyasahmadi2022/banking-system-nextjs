@@ -10,6 +10,7 @@ import CustomInput from "./custom-input"
 import { IconLoader2 } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
 import { signIn, signUp } from "@/lib/actions/user.actions"
+import PlaidLink from "./plaid-link"
 export const authFormSchema = (type: string) =>
   z.object({
     email: z.string().email(),
@@ -23,13 +24,18 @@ export const authFormSchema = (type: string) =>
       type === "sign-in" ? z.string().optional() : z.string().min(2).max(2),
     postalCode:
       type === "sign-in" ? z.string().optional() : z.string().min(3).max(6),
-    city: type === "sign-in" ? z.string().optional() : z.string().min(3).max(6),
+    city: type === "sign-in" ? z.string().optional() : z.string().min(3),
     ssn: type === "sign-in" ? z.string().optional() : z.string().min(3),
   })
 
-const AuthForm = ({ type }: { type: string }) => {
-  const [user, setUser] = React.useState(null)
+const AuthForm = ({ type }: { type: "sign-in" | "sign-up" }) => {
+  const [user, setUser] = useState<{
+    $id: string
+    email: string
+    name: string
+  } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
   const formSchema = authFormSchema(type)
   const router = useRouter()
   const form = useForm<z.infer<typeof formSchema>>({
@@ -49,23 +55,44 @@ const AuthForm = ({ type }: { type: string }) => {
   })
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true)
+    setServerError(null)
     try {
-      // signup - sign in
       if (type === "sign-in") {
         const response = await signIn({
           email: data.email,
           password: data.password,
         })
 
-        router.push("/")
+        if (!response.success) {
+          setServerError(response.message)
+          return
+        }
+
+        router.replace("/")
+        router.refresh()
       }
       if (type === "sign-up") {
-        console.log("hello")
-        const newUser = await signUp(data)
-        setUser(newUser)
+        const newData = {
+          firstName: data.firstName!,
+          lastName: data.lastName!,
+          address1: data.address1!,
+          city: data.city!,
+          state: data.state!,
+          postalCode: data.postalCode!,
+          dateOfBirth: data.dateOfBirth!,
+          ssn: data.ssn!,
+          email: data.email!,
+          password: data.password,
+        }
+        const newUser = await signUp(newData)
+        if (!newUser.success) {
+          setServerError(newUser.message)
+          return
+        }
+        setUser(newUser.user)
       }
-    } catch (err) {
-      console.log(err)
+    } catch {
+      setServerError("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -99,7 +126,10 @@ const AuthForm = ({ type }: { type: string }) => {
         </div>
       </header>
       {user ? (
-        <div className="flex flex-col gap-4">{/* PlaidLink */}</div>
+        <div className="flex flex-col gap-4">
+          {/* PlaidLink */}
+          <PlaidLink user={user} variant="primary" />
+        </div>
       ) : (
         <>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
@@ -160,7 +190,7 @@ const AuthForm = ({ type }: { type: string }) => {
                     control={form.control}
                   />
                   <CustomInput
-                    type="date"
+                    type="text"
                     name="dateOfBirth"
                     label="DateOfBirth"
                     placeholder="YYYY-MM-DD"
@@ -183,6 +213,12 @@ const AuthForm = ({ type }: { type: string }) => {
               placeholder="Enter Your Password"
               control={form.control}
             />
+
+            {serverError && (
+              <p className="form-message" role="alert">
+                {serverError}
+              </p>
+            )}
 
             <div className="mt-3 w-full">
               <Button type="submit" disabled={isLoading} className={"form-btn"}>
