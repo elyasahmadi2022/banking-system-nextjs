@@ -32,7 +32,15 @@ const AuthForm = ({ type }: { type: "sign-in" | "sign-up" }) => {
   const [user, setUser] = useState<{
     $id: string
     email: string
-    name: string
+    name: string,
+    firstName: string,
+    lastName: string,
+    postalCode: string,
+    ssn: string,
+    city: string,
+    address1: string, 
+    state: string,
+    dateOfBirth: string
   } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)

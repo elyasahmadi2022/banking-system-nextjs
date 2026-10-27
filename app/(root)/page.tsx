@@ -1,11 +1,23 @@
 import HeaderBox from '@/components/header-box'
 import RightSidebar from '@/components/right-bar'
 import TotalBalanceBox from '@/components/total-balance-box'
+import { getAccount, getAccounts } from '@/lib/actions/bank.actions'
 import { getLoggedInUser } from '@/lib/actions/user.actions'
+import { SearchParamProps } from '@/types'
 import React from 'react'
 
-const page = async () => {
+const page = async ({
+    params, searchParams
+}: SearchParamProps) => {
+    const {id} = await params
+
     const loggedUser = await getLoggedInUser()
+   
+    const accounts = await getAccounts({userId: loggedUser.$id})
+    const appwriteItemId = (id as string) || accounts.data?.[0]?.appwriteItemId
+    
+    const account = await getAccount({appwriteItemId});
+    console.log(account)
   return (
     <section className="home">
         <div className="home-content">

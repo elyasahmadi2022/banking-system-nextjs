@@ -1,5 +1,5 @@
 "use server"
-import { Account, Client, Databases, Users } from "node-appwrite"
+import { Account, Client, TablesDB, Users } from "node-appwrite"
 import { cookies } from "next/headers"
 
 export async function createClientSession(){
@@ -30,7 +30,7 @@ export async function createAdminClient(){
             return new Account(client)
         },
         get database(){
-            return new Databases(client)
+            return new TablesDB(client)
         },
         get users(){
             return new Users(client)

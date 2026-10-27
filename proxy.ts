@@ -10,6 +10,9 @@ export default async  function proxy(request: NextRequest) {
   const isAuthPage = publicAuthRoutes.some((route) =>
     pathname.startsWith(route)
   )
+  if(isAuthPage){
+    return NextResponse.next()
+  }
 
   // 2. Prevent infinite interception of background static files
   if (pathname.includes(".")) {

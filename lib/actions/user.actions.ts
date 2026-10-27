@@ -1,5 +1,5 @@
 "use server"
-import { AppwriteException, ID } from "node-appwrite"
+import { AppwriteException, ID, Query } from "node-appwrite"
 import { z } from "zod"
 import { createAdminClient, createClientSession } from "../appwrite"
 import {
@@ -8,6 +8,8 @@ import {
   User,
   exchangePublicTokenProps,
   createBankAccountProps,
+  getBanksProps,
+  getBankProps,
 } from "@/types"
 import { cookies } from "next/headers"
 import { encryptId, extractCustomerIdFromUrl, parseStringify } from "../utils"
@@ -33,7 +35,6 @@ type AuthError = {
   success: false
   message: string
 }
-
 type AuthActionResult = { success: true } | AuthError
 type SignUpActionResult =
   | {
@@ -133,11 +134,12 @@ export const signIn = async ({
   }
 }
 
-export const signUp = async (
-  {password, ...data}: SignUpParams
-): Promise<SignUpActionResult> => {
+export const signUp = async ({
+  password,
+  ...data
+}: SignUpParams): Promise<SignUpActionResult> => {
   const parsedData = signUpSchema.safeParse(data)
-  
+
   if (!parsedData.success) {
     return {
       success: false,
@@ -145,7 +147,7 @@ export const signUp = async (
     } satisfies AuthError
   }
 
-  const {email, firstName, lastName } = parsedData.data
+  const { email, firstName, lastName } = parsedData.data
   let userCreated = false
   let newUserAccount
 
@@ -166,20 +168,18 @@ export const signUp = async (
     if (!dwollaCustomerUrl) throw new Error("Error Creating Dwolla Customer")
 
     const dwollaCustomerId = extractCustomerIdFromUrl(dwollaCustomerUrl)
-    
-    const newUser = await database.createDocument({
+
+    const newUser = await database.createRow({
       databaseId: DATABASE_ID!,
-      collectionId: USER_COLLECTION_ID!,
-      documentId: ID.unique(),
-      data: 
-      {
+      tableId: USER_COLLECTION_ID!,
+      rowId: ID.unique(),
+      data: {
         ...data,
         userId: newUserAccount.$id,
         dwollaCustomerId,
         dwollaCustomerUrl,
-      }
+      },
     })
-    console.log(newUser)
     if (!newUser) throw new Error("Error creating new user into database.")
     userCreated = true
 
@@ -200,6 +200,15 @@ export const signUp = async (
         $id: newUser.$id,
         email: newUser.email,
         name: newUser.name,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        address1: newUser.address1,
+        state: newUser.state,
+        city: newUser.city,
+        dateOfBirth: newUser.dateOfBirth,
+        postalCode: newUser.postalCode,
+        dwollaCustomerId: dwollaCustomerId,
+        dwollaCustomerUrl,
       }),
     }
   } catch (error) {
@@ -222,12 +231,22 @@ export const signUp = async (
     } satisfies AuthError
   }
 }
-
+const getUserInfo =async (userId: string ) => {
+  const {database} = await createAdminClient()
+  const user = await database.listRows({
+      databaseId: DATABASE_ID!,
+      tableId: USER_COLLECTION_ID!,
+      queries: [Query.equal("userId", userId), Query.limit(1)]
+    })
+  return user.rows[0]
+}
 export const getLoggedInUser = async () => {
   try {
-    const { account } = await createClientSession()
+    const { account,  } = await createClientSession()
     const user = await account.get()
-    return parseStringify(user)
+    const userInfo = await getUserInfo(user.$id)
+
+    return parseStringify(userInfo)
   } catch {
     return null
   }
@@ -255,7 +274,7 @@ export const createLinkToken = async (user: User) => {
       user: {
         client_user_id: user.$id,
       },
-      client_name: user.name,
+      client_name: `${user.firstName} ${user.lastName}`,
       products: ["auth"] as Products[],
       language: "en",
       country_codes: ["US"] as CountryCode[],
@@ -271,6 +290,7 @@ export const createLinkToken = async (user: User) => {
 }
 
 export const createBankAccount = async ({
+  userId,
   bankId,
   accountId,
   accessToken,
@@ -279,19 +299,20 @@ export const createBankAccount = async ({
 }: createBankAccountProps) => {
   try {
     const { database } = await createAdminClient()
-    const bankAccount = await database.createDocument(
-      DATABASE_ID!,
-      BANK_COLLECTION_ID!,
-      ID.unique(),
-      {
+    const bankAccount = await database.createRow({
+      databaseId: DATABASE_ID!,
+      tableId: BANK_COLLECTION_ID!,
+      rowId: ID.unique(),
+      data: {
+        userId,
         bankId,
         accountId,
         accessToken,
         fundingSourceUrl,
         sharableId,
-      }
-    )
-
+      },
+    })
+    if (!bankAccount) throw new Error("Error creating bank")
     return parseStringify(bankAccount)
   } catch (err) {}
 }
@@ -346,5 +367,48 @@ export const exchangePublicToken = async ({
     })
   } catch (error) {
     console.error("An error accurred while creating exchange token: ", error)
+  }
+}
+
+export const getBanks = async ({ userId }: getBanksProps) => {
+  try {
+    const { database } = await createAdminClient()
+    
+    const banks = await database.listRows({
+      databaseId: DATABASE_ID!,
+      tableId: BANK_COLLECTION_ID!,
+      queries: [Query.equal("userId", userId)]
+    })
+    
+    return parseStringify(banks.rows)
+  } catch (error) {
+    if (error instanceof AppwriteException) {
+      console.error("Appwrite failed:", error.code, error.message)
+      return { success: false, message: error.message }
+    }
+
+    // Fallback for native/unknown JS errors
+    console.error("An unexpected error occurred:", error)
+  }
+}
+
+export const getBank = async ({ documentId }: getBankProps) => {
+  try {
+    const { database } = await createAdminClient()
+    const banks = await database.listRows({
+     databaseId: DATABASE_ID!,
+     tableId: BANK_COLLECTION_ID!,
+     queries: [Query.equal("$id", documentId)]
+
+    })
+    return parseStringify(banks.rows[0])
+  } catch (error) {
+    if (error instanceof AppwriteException) {
+      console.error("Appwrite failed:", error.code, error.message)
+      return { success: false, message: error.message }
+    }
+
+    // Fallback for native/unknown JS errors
+    console.error("An unexpected error occurred:", error)
   }
 }
